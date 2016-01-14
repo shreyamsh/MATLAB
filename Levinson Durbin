@@ -1,0 +1,35 @@
+1. Channel Coefficients estimation for the first 240 samples by Levinson Durbin Algorithm:
+N=240;                           %number of speech sequences to be used
+coeff=[1 -2.026 2.148 -1.159 0.279];    %actual coefficients that I have tested are 5. You just need to change these channel coefficients to any length, the code will perform according to the length of the channel.
+
+M=length(coeff);                        %number of coefficients
+ss = wavread('test.wav');               %input test speech sample
+u=filter(1,coeff,ss);                   %desired output of the actual channel
+ 
+ 
+ 
+%Coefficients estimation for the first 240 samples by Levinson Durbin Algorithm for M=5.
+ 
+    fs=u(1:N);         % first 240 samples of input signal
+    L=length(fs);
+    r=xcorr(fs);        %correlation of fs
+    r=r(L:L+10);        % Column matrix of the autocorrelation
+    
+    % Levinson-Durbin Recursion to get the coefficients
+    
+    coeff_est = -r(2)/r(1);
+    coeff_est=[1 ; coeff_est];
+    E(1)=r(1)+(r(2)*coeff_est(2));
+    for k=1:M
+        lamda=0;        
+        for j=0:k
+            lamda= lamda+(coeff_est(j+1)*r(k-j+2));
+        end
+        lamda=-lamda/E(k);
+       coeff_est=[coeff_est' 0];
+       U=coeff_est';
+       V=flipud(U);
+       coeff_est=U+lamda*V;
+       E(k+1)=(1-(lamda)^2)*E(k);       
+    end
+    coeff_est1=-coeff_est(2:k+1);
